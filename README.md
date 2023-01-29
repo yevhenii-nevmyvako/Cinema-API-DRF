@@ -15,6 +15,7 @@ Project API service for managing order and tickets and movies based Django Rest 
 - Filtering movies and movie sessions
 
 ![plot](./cinema/demo_img/demo1.png)
+![plot](./cinema/demo_img/demo3.png)
 ![plot](./cinema/demo_img/demo2.png)
 
 ## Installing using GitHub
