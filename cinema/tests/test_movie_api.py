@@ -82,63 +82,65 @@ class AuthenticatedMovieApiTests(TestCase):
         self.assertEqual(res.data, serializer.data)
 
     def test_filter_movies_by_genres(self):
-        genre1 = Genre.objects.create(name="Genre 1")
-        genre2 = Genre.objects.create(name="Genre 2")
+        action = Genre.objects.create(name="Action")
+        drama = Genre.objects.create(name="Drama")
 
-        movie1 = sample_movie(title="Movie 1")
-        movie2 = sample_movie(title="Movie 2")
+        interstellar = sample_movie(title="Interstellar")
+        robin_hood = sample_movie(title="Robin Hood")
 
-        movie1.genres.add(genre1)
-        movie2.genres.add(genre2)
+        interstellar.genres.add(action)
+        robin_hood.genres.add(drama)
 
-        movie3 = sample_movie(title="Movie without genres")
+        movie_without_genres = sample_movie(title="Movie without genres")
 
         res = self.client.get(
-            MOVIE_URL, {"genres": f"{genre1.id},{genre2.id}"}
+            MOVIE_URL, {"genres": f"{action.id},{drama.id}"}
         )
 
-        serializer1 = MovieListSerializer(movie1)
-        serializer2 = MovieListSerializer(movie2)
-        serializer3 = MovieListSerializer(movie3)
+        serializer1 = MovieListSerializer(interstellar)
+        serializer2 = MovieListSerializer(robin_hood)
+        serializer3 = MovieListSerializer(movie_without_genres)
 
         self.assertIn(serializer1.data, res.data)
         self.assertIn(serializer2.data, res.data)
         self.assertNotIn(serializer3.data, res.data)
 
     def test_filter_movies_by_actors(self):
-        actor1 = Actor.objects.create(first_name="Actor 1", last_name="Last 1")
-        actor2 = Actor.objects.create(first_name="Actor 2", last_name="Last 2")
+        anthony_hopkins = Actor.objects.create(
+            first_name="Anthony", last_name="Hopkins"
+        )
+        russell_crowe = Actor.objects.create(first_name="Russel", last_name="Crowe")
 
-        movie1 = sample_movie(title="Movie 1")
-        movie2 = sample_movie(title="Movie 2")
+        interstellar = sample_movie(title="Interstellar")
+        robin_hood = sample_movie(title="Robin Hood")
 
-        movie1.actors.add(actor1)
-        movie2.actors.add(actor2)
+        interstellar.actors.add(anthony_hopkins)
+        robin_hood.actors.add(russell_crowe)
 
-        movie3 = sample_movie(title="Movie without actors")
+        movie_without_actors = sample_movie(title="Movie without actors")
 
         res = self.client.get(
-            MOVIE_URL, {"actors": f"{actor1.id},{actor2.id}"}
+            MOVIE_URL, {"actors": f"{anthony_hopkins.id},{russell_crowe.id}"}
         )
 
-        serializer1 = MovieListSerializer(movie1)
-        serializer2 = MovieListSerializer(movie2)
-        serializer3 = MovieListSerializer(movie3)
+        serializer1 = MovieListSerializer(interstellar)
+        serializer2 = MovieListSerializer(robin_hood)
+        serializer3 = MovieListSerializer(movie_without_actors)
 
         self.assertIn(serializer1.data, res.data)
         self.assertIn(serializer2.data, res.data)
         self.assertNotIn(serializer3.data, res.data)
 
     def test_filter_movies_by_title(self):
-        movie1 = sample_movie(title="Movie")
-        movie2 = sample_movie(title="Another Movie")
-        movie3 = sample_movie(title="No match")
+        movie = sample_movie(title="Movie")
+        another_movie = sample_movie(title="Another Movie")
+        movie_empty = sample_movie(title="No match")
 
         res = self.client.get(MOVIE_URL, {"title": "movie"})
 
-        serializer1 = MovieListSerializer(movie1)
-        serializer2 = MovieListSerializer(movie2)
-        serializer3 = MovieListSerializer(movie3)
+        serializer1 = MovieListSerializer(movie)
+        serializer2 = MovieListSerializer(another_movie)
+        serializer3 = MovieListSerializer(movie_empty)
 
         self.assertIn(serializer1.data, res.data)
         self.assertIn(serializer2.data, res.data)
@@ -148,7 +150,7 @@ class AuthenticatedMovieApiTests(TestCase):
         movie = sample_movie()
         movie.genres.add(Genre.objects.create(name="Genre"))
         movie.actors.add(
-            Actor.objects.create(first_name="Actor", last_name="Last")
+            Actor.objects.create(first_name="Steve", last_name="Nicks")
         )
 
         url = detail_url(movie.id)
@@ -160,7 +162,7 @@ class AuthenticatedMovieApiTests(TestCase):
 
     def test_create_movie_forbidden(self):
         payload = {
-            "title": "Movie",
+            "title": "Interstellar",
             "description": "Description",
             "duration": 90,
         }
@@ -179,7 +181,7 @@ class AdminMovieApiTests(TestCase):
 
     def test_create_movie(self):
         payload = {
-            "title": "Movie",
+            "title": "Interstellar",
             "description": "Description",
             "duration": 90,
         }
@@ -191,11 +193,11 @@ class AdminMovieApiTests(TestCase):
             self.assertEqual(payload[key], getattr(movie, key))
 
     def test_create_movie_with_genres(self):
-        genre1 = Genre.objects.create(name="Action")
-        genre2 = Genre.objects.create(name="Adventure")
+        action = Genre.objects.create(name="Action")
+        adventure = Genre.objects.create(name="Adventure")
         payload = {
             "title": "Spider Man",
-            "genres": [genre1.id, genre2.id],
+            "genres": [action.id, adventure.id],
             "description": "With Spider-Man's identity now revealed, Peter asks Doctor Strange for help.",
             "duration": 148,
         }
@@ -205,15 +207,15 @@ class AdminMovieApiTests(TestCase):
         movie = Movie.objects.get(id=res.data["id"])
         genres = movie.genres.all()
         self.assertEqual(genres.count(), 2)
-        self.assertIn(genre1, genres)
-        self.assertIn(genre2, genres)
+        self.assertIn(action, genres)
+        self.assertIn(adventure, genres)
 
     def test_create_movie_with_actors(self):
-        actor1 = Actor.objects.create(first_name="Tom", last_name="Holland")
-        actor2 = Actor.objects.create(first_name="Tobey", last_name="Maguire")
+        tom_holland = Actor.objects.create(first_name="Tom", last_name="Holland")
+        tobey_maguire = Actor.objects.create(first_name="Tobey", last_name="Maguire")
         payload = {
             "title": "Spider Man",
-            "actors": [actor1.id, actor2.id],
+            "actors": [tom_holland.id, tobey_maguire.id],
             "description": "With Spider-Man's identity now revealed, Peter asks Doctor Strange for help.",
             "duration": 148,
         }
@@ -223,8 +225,8 @@ class AdminMovieApiTests(TestCase):
         movie = Movie.objects.get(id=res.data["id"])
         actors = movie.actors.all()
         self.assertEqual(actors.count(), 2)
-        self.assertIn(actor1, actors)
-        self.assertIn(actor2, actors)
+        self.assertIn(tom_holland, actors)
+        self.assertIn(tobey_maguire, actors)
 
 
 class MovieImageUploadTests(TestCase):
